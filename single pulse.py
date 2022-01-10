@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xlsxwriter
 
+
 abf = pyabf.ABF("C:/Users/DJ/Documents/Python Scripts/EPG/test.abf")         #files
 
 result = []
