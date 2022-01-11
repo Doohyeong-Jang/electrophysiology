@@ -1,0 +1,4 @@
+Single Cell analysis uses the "pyabf" library since the format of data is Axon Binary Format(ABF)
+
+in vivo data is acquired from "intan headstages".
+Reading/Making data file from rhd/rhs/rhx format files can be done by codes from https://intantech.com/downloads.html?tabSelect=Software&yPos=160
