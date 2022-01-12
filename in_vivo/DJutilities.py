@@ -1,7 +1,7 @@
 # This code is to make decoding rhd/rhs/rhx format at once
 
 # As I mentioned in "READ ME" file, code for reading data can be downloaded from the web site
-# So you should have the file/code already which contains the function "load_file"
+# So you should already have the file/code named importshutilites
 # after you correct save_path and read_path, type files_decoding(save_path,read_path)
 
 import os 
@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt, lfilter
 import matplotlib.pyplot as plt
+import importrhsutilities
 
 # butter_bandpass requires cutting freuqency(low, high), samplingrate(fs), cutting magnitude?(order)
 # it returns numerator(b) and denominator(a) of polynomials of the IIR filter
@@ -172,11 +173,12 @@ def files_decoding(save_path,read_path,channel1, channel2):
                             
                             # file_tmp indicates the location of the file
                             file_tmp = os.path.join(roots,file_name)
-                            result, data_present = load_file(file_tmp)
+                            result, data_present = importrhsutilities.load_file(file_tmp)
                             
                             # data frame...
                             if data_present:
                                 df3 = pd.DataFrame()
+                                
                                 df3[file_name+f"_{channel1}"] = result['amplifier_data'][channel1]
                                 df3[file_name+f"_{channel2}"] = result['amplifier_data'][channel2]
                                 df3.to_csv(save_path+"\\"+name, mode="a", header= False)
@@ -186,50 +188,55 @@ def files_decoding(save_path,read_path,channel1, channel2):
                             continue
 
 
-def save_figure(file, detection_mode, fs, order):
-    print(file)
+def save_figure(read_path, save_path, detection_mode, fs, order, channel1, channel2):
     
-    df = pd.read_csv(file, header=None)
-    df = df.drop(0, axis=1)
+    for (roots, dirs, files) in os.walk(read_path):
+        if len(files) > 0:
+            for i in files:
+                if i.endswith(".csv") and i[:-4]+".jpeg" not in roots:
+                    print(i)
+                    df = pd.read_csv(i, header=None)
+                    df = df.drop(0, axis=1)
 
-    df['first_filtered'] = butter_bandpass_filter(df[1],detection_mode[0],detection_mode[1],fs, order)
-    df['second_filtered'] = butter_bandpass_filter(df[2],detection_mode[0],detection_mode[1],fs, order)
+                    df['first_filtered'] = butter_bandpass_filter(df[1],detection_mode[0],detection_mode[1],fs, order)
+                    df['second_filtered'] = butter_bandpass_filter(df[2],detection_mode[0],detection_mode[1],fs, order)
 
-    freq_range, freq_amp = frequency_analysis(df['first_filtered'], 30000)
-    freq_range2, freq_amp2 = frequency_analysis(df['second_filtered'], 30000)
+                    freq_range, freq_amp = frequency_analysis(df['first_filtered'], 30000)
+                    freq_range2, freq_amp2 = frequency_analysis(df['second_filtered'], 30000)
 
-    x_axis =  np.arange(0, len(df[1]))/30000
+                    x_axis =  np.arange(0, len(df[1]))/30000
 
-    fig = plt.figure(figsize=(16,8))
-    ax1 = fig.add_subplot(4,1,1)
-    ax2 = fig.add_subplot(4,1,2)
-    ax3 = fig.add_subplot(4,1,3)
-    ax4 = fig.add_subplot(4,1,4)
+                    fig = plt.figure(figsize=(16,8))
+                    ax1 = fig.add_subplot(4,1,1)
+                    ax2 = fig.add_subplot(4,1,2)
+                    ax3 = fig.add_subplot(4,1,3)
+                    ax4 = fig.add_subplot(4,1,4)
 
-    ax1.plot(x_axis, df[1], label="raw_data_9")
-    ax1.plot(x_axis, df["first_filtered"], label="filtered")
-    ax1.set_ylim([-500,500])
-    ax1.set_ylabel("Voltage (micro volts)")
-    ax1.legend(loc = "upper right")
+                    ax1.plot(x_axis, df[1], label="raw_data_"+str(channel1))
+                    ax1.plot(x_axis, df["first_filtered"], label="filtered")
+                    # ax1.set_ylim([-500,500])
+                    ax1.set_ylabel("Voltage (micro volts)")
+                    ax1.legend(loc = "upper right")
 
-    ax2.plot(x_axis, df[2], label='raw_data_13')
-    ax2.plot(x_axis, df["second_filtered"], label="filtered")
-    ax2.set_ylim([-500,500])
-    ax2.set_ylabel("Voltage (micro volts)")
-    ax2.set_xlabel("time(second)")
-    ax2.legend(loc = "upper right")
-
-
-    ax3.plot(freq_range, freq_amp)
-    ax3.set_ylabel("PSD? or?")
-    ax3.set_xlim([0,100])
+                    ax2.plot(x_axis, df[2], label='raw_data_'+str(channel2))
+                    ax2.plot(x_axis, df["second_filtered"], label="filtered")
+                    # ax2.set_ylim([-500,500])
+                    ax2.set_ylabel("Voltage (micro volts)")
+                    ax2.set_xlabel("time(second)")
+                    ax2.legend(loc = "upper right")
 
 
-    ax4.plot(freq_range2, freq_amp2)
-    ax4.set_ylabel("psd? or ?")
-    ax4.set_xlabel("frequency(HZ)")
-    ax4.set_xlim([0,100])
-    fig.savefig(file[:-4]+'.jpeg', dpi=300)
-    
-    plt.clf()
-    plt.close('all')
+                    ax3.plot(freq_range, freq_amp)
+                    ax3.set_ylabel("PSD? or?")
+                    ax3.set_xlim([0,100])
+
+
+                    ax4.plot(freq_range2, freq_amp2)
+                    ax4.set_ylabel("psd? or ?")
+                    ax4.set_xlabel("frequency(HZ)")
+                    ax4.set_xlim([0,100])
+                    
+                    fig.savefig( save_path+"\\"+i[:-4]+'.jpeg', dpi=300)
+                    
+                    plt.clf()
+                    plt.close('all')
